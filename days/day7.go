@@ -68,7 +68,7 @@ func Day7Part2() int {
 		resultChan, eaReadChan := intcode.ChanSplit(wg, eaWriteChan)
 		eaReadChan = intcode.ChanConcatenate(wg, initChan, eaReadChan)
 
-		computers := []pair{
+		computers := []*pair{
 			{computer: intcode.NewComputer("AMP_A", input, eaReadChan, abWriteChan), out: abWriteChan},
 			{computer: intcode.NewComputer("AMP_B", input, abReadChan, bcWriteChan), out: bcWriteChan},
 			{computer: intcode.NewComputer("AMP_C", input, bcReadChan, cdWriteChan), out: cdWriteChan},
@@ -78,18 +78,23 @@ func Day7Part2() int {
 
 		for _, v := range computers {
 			wg.Add(1)
-			go func() {
-				v.computer.RunUntilDone()
-				close(v.out)
+			go func(p *pair) {
+				p.computer.RunUntilDone()
+				close(p.out)
 				wg.Done()
-			}()
+			}(v)
 		}
 
 		go func() {
 			for val := range resultChan {
 				max = maxInt(max, val)
 			}
+
+			// need to fetch the last value from split channel, so
+			// the channel can be closed and the wait group is done
+			<-eaReadChan
 		}()
+
 		wg.Wait()
 	}
 
