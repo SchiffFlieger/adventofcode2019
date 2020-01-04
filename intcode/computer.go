@@ -10,7 +10,7 @@ import (
 type (
 	Computer struct {
 		name string
-		data []int
+		data *intslice
 		ptr  int
 		base int
 		in   <-chan int
@@ -35,10 +35,9 @@ type (
 
 func NewComputer(name string, data []int, in <-chan int, out chan<- int) *Computer {
 	dataCopy := append([]int{}, data...)
-	dataCopy = extendInputCapacity(dataCopy)
 	c := &Computer{
 		name: name,
-		data: dataCopy,
+		data: &intslice{dataCopy},
 		in:   in,
 		out:  out,
 	}
@@ -58,8 +57,8 @@ func (c *Computer) NextCommand() Command {
 		return nil
 	}
 
-	op := c.data[c.ptr] % 100
-	modes := c.data[c.ptr] / 100
+	op := c.data.Get(c.ptr) % 100
+	modes := c.data.Get(c.ptr) / 100
 	switch op {
 	case 1:
 		params := c.getParameters(3, modes)
@@ -158,14 +157,14 @@ func (c *Computer) Done() bool {
 }
 
 func (c *Computer) GetValue(pos int) int {
-	return c.data[pos]
+	return c.data.Get(pos)
 }
 
 func (c *Computer) getParameters(n int, modeMask int) []Parameter {
 	params := make([]Parameter, 0, n)
 	for i := 0; i < n; i++ {
 		mode := (modeMask / int(math.Pow10(i))) % 10
-		raw := c.data[c.ptr+1+i]
+		raw := c.data.Get(c.ptr + 1 + i)
 		params = append(params, Parameter{
 			Mode:         ParameterMode(mode),
 			rawValue:     raw,
@@ -174,21 +173,4 @@ func (c *Computer) getParameters(n int, modeMask int) []Parameter {
 	}
 
 	return params
-}
-
-func extendInputCapacity(input []int) []int {
-	max := 0
-	for _, v := range input {
-		if v > max {
-			max = v
-		}
-	}
-	max = max - len(input) + 1
-	if max < 0 {
-		return input
-	}
-
-	add := make([]int, max)
-	input = append(input, add...)
-	return input
 }

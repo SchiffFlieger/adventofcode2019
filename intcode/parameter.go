@@ -16,14 +16,14 @@ const (
 	ParameterModeRelative  = 2
 )
 
-func (p *Parameter) Value(input []int) int {
+func (p *Parameter) Value(input *intslice) int {
 	switch p.Mode {
 	case ParameterModePosition:
-		return input[p.rawValue]
+		return input.Get(p.rawValue)
 	case ParameterModeImmediate:
 		return p.rawValue
 	case ParameterModeRelative:
-		return input[p.rawValue+p.relativeBase]
+		return input.Get(p.rawValue + p.relativeBase)
 	}
 
 	panic("unknown parameter mode")
