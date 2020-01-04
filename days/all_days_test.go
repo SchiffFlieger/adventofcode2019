@@ -72,3 +72,11 @@ func TestDay8Part2(t *testing.T) {
 	expected := "011000110010010111101110010010100101001010000100101001010000100101110011100111101011010010100001001010010100101001010000100101001001110011001111011100"
 	assert.Equal(t, expected, Day8Part2())
 }
+
+func TestDay9Part1(t *testing.T) {
+	assert.Equal(t, 3429606717, Day9Part1())
+}
+
+func TestDay9Part2(t *testing.T) {
+	assert.Equal(t, 33679, Day9Part2())
+}
