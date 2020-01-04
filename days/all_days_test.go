@@ -88,3 +88,17 @@ func TestDay10Part1(t *testing.T) {
 func TestDay10Part2(t *testing.T) {
 	assert.Equal(t, 1707, Day10Part2())
 }
+
+func TestDay11Part1(t *testing.T) {
+	assert.Equal(t, 2141, Day11Part1())
+}
+
+func TestDay11Part2(t *testing.T) {
+	// the correct answer is RPJCFZKF
+	// format the string with w=43 and h=6 and remove all 0s to see the letters
+	expected := "011100111000011001100111101111010010111100001001010010000101001010000000101010010000000100101001000010100001110000100110001110000011100111000001010000100000100010100100000001010010000100101001010000100001010010000000100101000001100011001000011110100101000000"
+	image, width, height := Day11Part2()
+	assert.Equal(t, expected, image)
+	assert.Equal(t, 43, width)
+	assert.Equal(t, 6, height)
+}
