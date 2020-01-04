@@ -61,3 +61,14 @@ func TestDay7Part1(t *testing.T) {
 func TestDay7Part2(t *testing.T) {
 	assert.Equal(t, 2299406, Day7Part2())
 }
+
+func TestDay8Part1(t *testing.T) {
+	assert.Equal(t, 2760, Day8Part1())
+}
+
+func TestDay8Part2(t *testing.T) {
+	// the correct answer is AGUEB
+	// format the string with w=25 and h=6 and remove all 0s to see the letters
+	expected := "011000110010010111101110010010100101001010000100101001010000100101110011100111101011010010100001001010010100101001010000100101001001110011001111011100"
+	assert.Equal(t, expected, Day8Part2())
+}
