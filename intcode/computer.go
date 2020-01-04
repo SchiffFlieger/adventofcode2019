@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sync/atomic"
 )
 
 type (
@@ -13,7 +14,7 @@ type (
 		ptr  int
 		in   <-chan int
 		out  chan<- int
-		done bool
+		done atomic.Value
 	}
 
 	InstructionPointerChange struct {
@@ -25,12 +26,14 @@ type (
 func NewComputer(name string, data []int, in <-chan int, out chan<- int) *Computer {
 	dataCopy := append([]int{}, data...)
 	dataCopy = extendInputCapacity(dataCopy)
-	return &Computer{
+	c := &Computer{
 		name: name,
 		data: dataCopy,
 		in:   in,
 		out:  out,
 	}
+	c.done.Store(false)
+	return c
 }
 
 func (c *Computer) RunUntilDone() {
@@ -41,7 +44,7 @@ func (c *Computer) RunUntilDone() {
 }
 
 func (c *Computer) NextCommand() Command {
-	if c.done {
+	if c.Done() {
 		return nil
 	}
 
@@ -108,7 +111,7 @@ func (c *Computer) NextCommand() Command {
 }
 
 func (c *Computer) ApplyCommand(cmd Command) {
-	if c.done {
+	if c.Done() {
 		return
 	}
 
@@ -118,7 +121,7 @@ func (c *Computer) ApplyCommand(cmd Command) {
 
 	change, err := cmd.Apply(c.data)
 	if err != nil {
-		c.done = true
+		c.done.Store(true)
 		if os.Getenv("DEBUG") == "1" {
 			fmt.Printf("%s: %v\n", c.name, err)
 		}
@@ -133,7 +136,7 @@ func (c *Computer) ApplyCommand(cmd Command) {
 }
 
 func (c *Computer) Done() bool {
-	return c.done
+	return c.done.Load().(bool)
 }
 
 func (c *Computer) GetValue(pos int) int {
@@ -166,7 +169,7 @@ func extendInputCapacity(input []int) []int {
 		return input
 	}
 
-	add := make([]int, max, max)
+	add := make([]int, max)
 	input = append(input, add...)
 	return input
 }

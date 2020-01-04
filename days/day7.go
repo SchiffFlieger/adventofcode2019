@@ -3,6 +3,7 @@ package days
 import (
 	"adventofcode/intcode"
 	"math"
+	"runtime"
 	"sync"
 
 	"github.com/gitchander/permutation"
@@ -53,7 +54,6 @@ func Day7Part2() int {
 	max := math.MinInt64
 	for perm.Next() {
 		wg := &sync.WaitGroup{}
-
 		abWriteChan := make(chan int)
 		abReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[1]), abWriteChan)
 		bcWriteChan := make(chan int)
@@ -63,10 +63,8 @@ func Day7Part2() int {
 		deWriteChan := make(chan int)
 		deReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[4]), deWriteChan)
 
-		initChan := intcode.IntProviderChan(wg, phaseSettings[0], 0)
 		eaWriteChan := make(chan int)
-		resultChan, eaReadChan := intcode.ChanSplit(wg, eaWriteChan)
-		eaReadChan = intcode.ChanConcatenate(wg, initChan, eaReadChan)
+		eaReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[0], 0), eaWriteChan)
 
 		computers := []*pair{
 			{computer: intcode.NewComputer("AMP_A", input, eaReadChan, abWriteChan), out: abWriteChan},
@@ -85,15 +83,10 @@ func Day7Part2() int {
 			}(v)
 		}
 
-		go func() {
-			for val := range resultChan {
-				max = maxInt(max, val)
-			}
-
-			// need to fetch the last value from split channel, so
-			// the channel can be closed and the wait group is done
-			<-eaReadChan
-		}()
+		for !computers[0].computer.Done() {
+			runtime.Gosched()
+		}
+		max = maxInt(max, <-eaReadChan)
 
 		wg.Wait()
 	}

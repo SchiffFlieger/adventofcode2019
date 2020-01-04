@@ -30,7 +30,7 @@ func findMinDistanceAndMinTime(path1 map[int]map[int]int, path2 map[int]map[int]
 	for x, yMap1 := range path1 {
 		if _, ok1 := path2[x]; ok1 {
 			// x is in both paths
-			for y, _ := range yMap1 {
+			for y := range yMap1 {
 				yMap2 := path2[x]
 				if _, ok2 := yMap2[y]; ok2 {
 					// intersection on (x,y) exists
