@@ -2,8 +2,9 @@ package intcode
 
 type (
 	Parameter struct {
-		Mode     ParameterMode
-		rawValue int
+		Mode         ParameterMode
+		rawValue     int
+		relativeBase int
 	}
 
 	ParameterMode int
@@ -12,6 +13,7 @@ type (
 const (
 	ParameterModePosition  = 0
 	ParameterModeImmediate = 1
+	ParameterModeRelative  = 2
 )
 
 func (p *Parameter) Value(input []int) int {
@@ -20,6 +22,8 @@ func (p *Parameter) Value(input []int) int {
 		return input[p.rawValue]
 	case ParameterModeImmediate:
 		return p.rawValue
+	case ParameterModeRelative:
+		return input[p.rawValue+p.relativeBase]
 	}
 
 	panic("unknown parameter mode")

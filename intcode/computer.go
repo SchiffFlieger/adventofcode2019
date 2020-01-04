@@ -12,6 +12,7 @@ type (
 		name string
 		data []int
 		ptr  int
+		base int
 		in   <-chan int
 		out  chan<- int
 		done atomic.Value
@@ -20,6 +21,15 @@ type (
 	InstructionPointerChange struct {
 		Absolute bool
 		Value    int
+	}
+
+	RelativeBaseChange struct {
+		Value int
+	}
+
+	CommandFeedback struct {
+		InstructionPointerChange
+		RelativeBaseChange
 	}
 )
 
@@ -103,6 +113,11 @@ func (c *Computer) NextCommand() Command {
 			Param2:         params[1],
 			ResultPosition: params[2],
 		}
+	case 9:
+		params := c.getParameters(1, modes)
+		return &AdjustRelativeBaseCommand{
+			Param1: params[0],
+		}
 	case 99:
 		return &HaltCommand{}
 	}
@@ -128,11 +143,13 @@ func (c *Computer) ApplyCommand(cmd Command) {
 		return
 	}
 
-	if change.Absolute {
-		c.ptr = change.Value
+	if change.InstructionPointerChange.Absolute {
+		c.ptr = change.InstructionPointerChange.Value
 	} else {
-		c.ptr += change.Value
+		c.ptr += change.InstructionPointerChange.Value
 	}
+
+	c.base += change.RelativeBaseChange.Value
 }
 
 func (c *Computer) Done() bool {
@@ -149,8 +166,9 @@ func (c *Computer) getParameters(n int, modeMask int) []Parameter {
 		mode := (modeMask / int(math.Pow10(i))) % 10
 		raw := c.data[c.ptr+1+i]
 		params = append(params, Parameter{
-			Mode:     ParameterMode(mode),
-			rawValue: raw,
+			Mode:         ParameterMode(mode),
+			rawValue:     raw,
+			relativeBase: c.base,
 		})
 	}
 

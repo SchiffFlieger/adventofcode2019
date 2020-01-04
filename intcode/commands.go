@@ -4,7 +4,7 @@ import "io"
 
 type (
 	Command interface {
-		Apply(input []int) (ip InstructionPointerChange, err error)
+		Apply(input []int) (ip CommandFeedback, err error)
 	}
 
 	AddCommand struct {
@@ -51,63 +51,71 @@ type (
 		ResultPosition Parameter
 	}
 
+	AdjustRelativeBaseCommand struct {
+		Param1 Parameter
+	}
+
 	HaltCommand struct{}
 )
 
-func (c *AddCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *AddCommand) Apply(input []int) (CommandFeedback, error) {
 	summand1 := c.Summand1.Value(input)
 	summand2 := c.Summand2.Value(input)
 
 	input[c.ResultPosition.PositionalValue()] = summand1 + summand2
-	return InstructionPointerChange{Value: 4}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 4}}, nil
 }
 
-func (c *MultiplyCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *MultiplyCommand) Apply(input []int) (CommandFeedback, error) {
 	factor1 := c.Factor1.Value(input)
 	factor2 := c.Factor2.Value(input)
 
 	input[c.ResultPosition.PositionalValue()] = factor1 * factor2
-	return InstructionPointerChange{Value: 4}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 4}}, nil
 }
 
-func (c *InputCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *InputCommand) Apply(input []int) (CommandFeedback, error) {
 	input[c.ResultPosition.PositionalValue()] = <-c.Input
-	return InstructionPointerChange{Value: 2}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 2}}, nil
 }
 
-func (c *OutputCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *OutputCommand) Apply(input []int) (CommandFeedback, error) {
 	value := c.OutputValue.Value(input)
 	c.Output <- value
-	return InstructionPointerChange{Value: 2}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 2}}, nil
 }
 
-func (c *JumpIfTrueCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *JumpIfTrueCommand) Apply(input []int) (CommandFeedback, error) {
 	pos := c.JumpTo.Value(input)
 
 	if c.Compare.Value(input) != 0 {
-		return InstructionPointerChange{
-			Absolute: true,
-			Value:    pos,
+		return CommandFeedback{
+			InstructionPointerChange: InstructionPointerChange{
+				Absolute: true,
+				Value:    pos,
+			},
 		}, nil
 	}
 
-	return InstructionPointerChange{Value: 3}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 3}}, nil
 }
 
-func (c *JumpIfFalseCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *JumpIfFalseCommand) Apply(input []int) (CommandFeedback, error) {
 	pos := c.JumpTo.Value(input)
 
 	if c.Compare.Value(input) == 0 {
-		return InstructionPointerChange{
-			Absolute: true,
-			Value:    pos,
+		return CommandFeedback{
+			InstructionPointerChange: InstructionPointerChange{
+				Absolute: true,
+				Value:    pos,
+			},
 		}, nil
 	}
 
-	return InstructionPointerChange{Value: 3}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 3}}, nil
 }
 
-func (c *LessThanCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *LessThanCommand) Apply(input []int) (CommandFeedback, error) {
 	value1 := c.Param1.Value(input)
 	value2 := c.Param2.Value(input)
 
@@ -117,10 +125,10 @@ func (c *LessThanCommand) Apply(input []int) (InstructionPointerChange, error) {
 	}
 
 	input[c.ResultPosition.PositionalValue()] = result
-	return InstructionPointerChange{Value: 4}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 4}}, nil
 }
 
-func (c *EqualsCommand) Apply(input []int) (InstructionPointerChange, error) {
+func (c *EqualsCommand) Apply(input []int) (CommandFeedback, error) {
 	value1 := c.Param1.Value(input)
 	value2 := c.Param2.Value(input)
 
@@ -130,9 +138,17 @@ func (c *EqualsCommand) Apply(input []int) (InstructionPointerChange, error) {
 	}
 
 	input[c.ResultPosition.PositionalValue()] = result
-	return InstructionPointerChange{Value: 4}, nil
+	return CommandFeedback{InstructionPointerChange: InstructionPointerChange{Value: 4}}, nil
 }
 
-func (c *HaltCommand) Apply(input []int) (InstructionPointerChange, error) {
-	return InstructionPointerChange{}, io.EOF
+func (c *AdjustRelativeBaseCommand) Apply(input []int) (CommandFeedback, error) {
+	base := c.Param1.Value(input)
+	return CommandFeedback{
+		InstructionPointerChange: InstructionPointerChange{Value: 2},
+		RelativeBaseChange:       RelativeBaseChange{Value: base},
+	}, nil
+}
+
+func (c *HaltCommand) Apply(_ []int) (CommandFeedback, error) {
+	return CommandFeedback{}, io.EOF
 }
