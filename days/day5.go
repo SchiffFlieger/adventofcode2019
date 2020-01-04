@@ -17,7 +17,6 @@ func Day5Part1() int {
 		c.ApplyCommand(cmd)
 	}
 
-	close(out.Channel)
 	wg.Wait()
 
 	ints := out.Value()
@@ -36,7 +35,6 @@ func Day5Part2() int {
 		c.ApplyCommand(cmd)
 	}
 
-	close(out.Channel)
 	wg.Wait()
 
 	ints := out.Value()

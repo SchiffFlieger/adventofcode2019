@@ -137,6 +137,7 @@ func (c *Computer) ApplyCommand(cmd Command) {
 	change, err := cmd.Apply(c.data)
 	if err != nil {
 		c.done.Store(true)
+		close(c.out)
 		if os.Getenv("DEBUG") == "1" {
 			fmt.Printf("%s: %v\n", c.name, err)
 		}

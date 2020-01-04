@@ -18,35 +18,41 @@ func Day7Part1() int {
 	for perm.Next() {
 		wg := &sync.WaitGroup{}
 
-		channel := make(chan int, 1) // buffered
-		c1 := intcode.NewComputer("AMP_A", input, intcode.IntProviderChan(wg, phaseSettings[0], 0), channel)
-		c1.RunUntilDone()
+		initChan := intcode.IntProviderChan(wg, phaseSettings[0], 0)
+		abWriteChan := make(chan int)
+		abReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[1]), abWriteChan)
+		bcWriteChan := make(chan int)
+		bcReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[2]), bcWriteChan)
+		cdWriteChan := make(chan int)
+		cdReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[3]), cdWriteChan)
+		deWriteChan := make(chan int)
+		deReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[4]), deWriteChan)
+		resultChan := make(chan int)
 
-		c2 := intcode.NewComputer("AMP_B", input, intcode.IntProviderChan(wg, phaseSettings[1], <-channel), channel)
-		c2.RunUntilDone()
+		computers := []*intcode.Computer{
+			intcode.NewComputer("AMP_A", input, initChan, abWriteChan),
+			intcode.NewComputer("AMP_B", input, abReadChan, bcWriteChan),
+			intcode.NewComputer("AMP_C", input, bcReadChan, cdWriteChan),
+			intcode.NewComputer("AMP_D", input, cdReadChan, deWriteChan),
+			intcode.NewComputer("AMP_E", input, deReadChan, resultChan),
+		}
 
-		c3 := intcode.NewComputer("AMP_C", input, intcode.IntProviderChan(wg, phaseSettings[2], <-channel), channel)
-		c3.RunUntilDone()
+		for _, v := range computers {
+			wg.Add(1)
+			go func(c *intcode.Computer) {
+				c.RunUntilDone()
+				wg.Done()
+			}(v)
+		}
 
-		c4 := intcode.NewComputer("AMP_D", input, intcode.IntProviderChan(wg, phaseSettings[3], <-channel), channel)
-		c4.RunUntilDone()
-
-		c5 := intcode.NewComputer("AMP_E", input, intcode.IntProviderChan(wg, phaseSettings[4], <-channel), channel)
-		c5.RunUntilDone()
-
+		max = maxInt(max, <-resultChan)
 		wg.Wait()
-		max = maxInt(max, <-channel)
 	}
 
 	return max
 }
 
 func Day7Part2() int {
-	type pair struct {
-		computer *intcode.Computer
-		out      chan int
-	}
-
 	input := day7input()
 	phaseSettings := []int{5, 6, 7, 8, 9}
 	perm := permutation.New(permutation.IntSlice(phaseSettings))
@@ -66,24 +72,23 @@ func Day7Part2() int {
 		eaWriteChan := make(chan int)
 		eaReadChan := intcode.ChanConcatenate(wg, intcode.IntProviderChan(wg, phaseSettings[0], 0), eaWriteChan)
 
-		computers := []*pair{
-			{computer: intcode.NewComputer("AMP_A", input, eaReadChan, abWriteChan), out: abWriteChan},
-			{computer: intcode.NewComputer("AMP_B", input, abReadChan, bcWriteChan), out: bcWriteChan},
-			{computer: intcode.NewComputer("AMP_C", input, bcReadChan, cdWriteChan), out: cdWriteChan},
-			{computer: intcode.NewComputer("AMP_D", input, cdReadChan, deWriteChan), out: deWriteChan},
-			{computer: intcode.NewComputer("AMP_E", input, deReadChan, eaWriteChan), out: eaWriteChan},
+		computers := []*intcode.Computer{
+			intcode.NewComputer("AMP_A", input, eaReadChan, abWriteChan),
+			intcode.NewComputer("AMP_B", input, abReadChan, bcWriteChan),
+			intcode.NewComputer("AMP_C", input, bcReadChan, cdWriteChan),
+			intcode.NewComputer("AMP_D", input, cdReadChan, deWriteChan),
+			intcode.NewComputer("AMP_E", input, deReadChan, eaWriteChan),
 		}
 
 		for _, v := range computers {
 			wg.Add(1)
-			go func(p *pair) {
-				p.computer.RunUntilDone()
-				close(p.out)
+			go func(c *intcode.Computer) {
+				c.RunUntilDone()
 				wg.Done()
 			}(v)
 		}
 
-		for !computers[0].computer.Done() {
+		for !computers[0].Done() {
 			runtime.Gosched()
 		}
 		max = maxInt(max, <-eaReadChan)

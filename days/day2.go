@@ -9,7 +9,7 @@ func Day2Part1() int {
 	input[1] = 12
 	input[2] = 2
 
-	c := intcode.NewComputer("Computer", input, nil, nil)
+	c := intcode.NewComputer("Computer", input, nil, make(chan int))
 	for !c.Done() {
 		cmd := c.NextCommand()
 		c.ApplyCommand(cmd)
@@ -26,7 +26,7 @@ func Day2Part2() int {
 			input[1] = noun
 			input[2] = verb
 
-			c := intcode.NewComputer("Computer", input, nil, nil)
+			c := intcode.NewComputer("Computer", input, nil, make(chan int))
 			for !c.Done() {
 				cmd := c.NextCommand()
 				c.ApplyCommand(cmd)
