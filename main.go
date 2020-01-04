@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	fmt.Println(days.Day9Part1())
-	fmt.Println(days.Day9Part2())
+	fmt.Println(days.Day10Part1())
+	fmt.Println(days.Day10Part2())
 }

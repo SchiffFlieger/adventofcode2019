@@ -80,3 +80,11 @@ func TestDay9Part1(t *testing.T) {
 func TestDay9Part2(t *testing.T) {
 	assert.Equal(t, 33679, Day9Part2())
 }
+
+func TestDay10Part1(t *testing.T) {
+	assert.Equal(t, 256, Day10Part1())
+}
+
+func TestDay10Part2(t *testing.T) {
+	assert.Equal(t, 1707, Day10Part2())
+}
