@@ -26,9 +26,16 @@ func (p *Parameter) Value(input *intslice) int {
 		return input.Get(p.rawValue + p.relativeBase)
 	}
 
-	panic("unknown parameter mode")
+	panic("value: unknown parameter mode")
 }
 
 func (p *Parameter) PositionalValue() int {
-	return p.rawValue
+	switch p.Mode {
+	case ParameterModePosition:
+		return p.rawValue
+	case ParameterModeRelative:
+		return p.rawValue + p.relativeBase
+	}
+
+	panic("positional value: unknown parameter mode")
 }
