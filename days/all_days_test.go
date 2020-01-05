@@ -102,3 +102,11 @@ func TestDay11Part2(t *testing.T) {
 	assert.Equal(t, 43, width)
 	assert.Equal(t, 6, height)
 }
+
+func TestDay12Part1(t *testing.T) {
+	assert.Equal(t, 10028, Day12Part1())
+}
+
+func TestDay12Part2(t *testing.T) {
+	assert.Equal(t, "314610635824376", Day12Part2())
+}
